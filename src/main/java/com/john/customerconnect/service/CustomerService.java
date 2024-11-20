@@ -1,12 +1,15 @@
 package com.john.customerconnect.service;
 
 import com.john.customerconnect.controller.dto.CreateCustomerDTO;
+import com.john.customerconnect.controller.dto.UpdateCustomerDTO;
 import com.john.customerconnect.entity.CustomerEntity;
 import com.john.customerconnect.repository.CustomerRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 import static org.springframework.util.StringUtils.hasText;
 
@@ -59,11 +62,53 @@ public class CustomerService {
 
     private PageRequest getPageRequest(Integer page, Integer pageSize, String orderBy) {
         var direction = Sort.Direction.DESC;
-        if (orderBy.equalsIgnoreCase("asc")){
+        if (orderBy.equalsIgnoreCase("asc")) {
             direction = Sort.Direction.ASC;
         }
 
         return PageRequest.of(page, pageSize, direction, "createdAt");
     }
 
+    public Optional<CustomerEntity> findById(Long customerId) {
+        return customerRepository.findById(customerId);
+    }
+
+    public Optional<CustomerEntity> updateById(Long customerId, UpdateCustomerDTO dto) {
+
+        var customer = customerRepository.findById(customerId);
+
+        updateFields(dto, customer);
+
+        return customer;
+    }
+
+    private void updateFields(UpdateCustomerDTO dto, Optional<CustomerEntity> customer) {
+        if(customer.isPresent()) {
+
+            if(hasText(dto.fullname())){
+                customer.get().setFullName(dto.fullname());
+            }
+
+            if(hasText(dto.email())){
+                customer.get().setEmail(dto.email());
+            }
+
+            if(hasText(dto.cellPhone())){
+                customer.get().setCellPhone(dto.cellPhone());
+            }
+
+            customerRepository.save(customer.get());
+        }
+    }
+
+    public boolean deleteById(Long customerId) {
+
+        var exists = customerRepository.existsById((customerId));
+
+        if (exists){
+            customerRepository.deleteById(customerId);
+        }
+
+        return exists;
+    }
 }
